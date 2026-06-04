@@ -1,14 +1,779 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="SecureLayer — AI Agent Security Management for MSSPs and SMBs" />
-    <title>SecureLayer</title>
-    <script type="module" crossorigin src="/securelayer-demo/assets/index-DJrHYcMB.js"></script>
-    <link rel="stylesheet" crossorigin href="/securelayer-demo/assets/index-VGshBzk7.css">
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>SecureLayer — Phase 1 Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<style>
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@500,700,900&f[]=general-sans@400,500,600,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&display=swap');
+/* ===== DESIGN.md tokens ===== */
+:root{
+  --bg:#0d0f14; --bg-2:#13161e; --bg-3:#1a1e28; --bg-4:#222736;
+  --border:#2a2f3d; --border-2:#363d52;
+  --text:#f1f4fa; --text-2:#aab2c6; --text-3:#727b91;
+  --accent:#f59e0b; --accent-dim:rgba(245,158,11,.14); --accent-border:rgba(245,158,11,.35);
+  --green:#2ecc71; --green-dim:rgba(46,204,113,.14);
+  --orange:#fb923c; --orange-dim:rgba(251,146,60,.14);
+  --red:#f05252; --red-dim:rgba(240,82,82,.14);
+  --blue:#4d8dff; --blue-dim:rgba(77,141,255,.14);
+  --purple:#b06bf0; --purple-dim:rgba(176,107,240,.14);
+  --splunk:#7bc043; --splunk-dim:rgba(123,192,67,.14);
+  --sidebar-w:248px; --header-h:60px; --beat-h:52px;
+  --radius:8px; --radius-lg:12px;
+  --font:'General Sans',system-ui,sans-serif; --display:'Satoshi','General Sans',sans-serif; --mono:'JetBrains Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:15px;line-height:1.55;font-weight:500;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.mono{font-family:var(--mono)}
+.logo-name,.page-head h1,.step h3,.cert h3,.alert h3,.beat-tag{font-family:var(--display);letter-spacing:-.01em}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:4px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ===== Layout shell ===== */
+.app{display:grid;grid-template-columns:var(--sidebar-w) 1fr;grid-template-rows:var(--header-h) var(--beat-h) 1fr;height:100vh;
+  grid-template-areas:"sidebar header" "sidebar beat" "sidebar main"}
+/* HEADER */
+.header{grid-area:header;display:flex;align-items:center;gap:16px;padding:0 22px;border-bottom:1px solid var(--border);background:var(--bg-2)}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-mark{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;color:#000;font-size:17px}
+.logo-name{font-weight:900;font-size:17px;letter-spacing:-.01em}
+.logo-stealth{font-size:11px;color:var(--text-2);font-weight:600}
+.mode-pill{margin-left:10px;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;letter-spacing:.04em;color:var(--accent);background:var(--accent-dim);border:1px solid var(--accent-border);border-radius:99px;padding:5px 13px}
+.tenant-sel{margin-left:auto;display:flex;align-items:center;gap:9px;background:var(--bg-3);border:1px solid var(--border-2);border-radius:var(--radius);padding:8px 14px;font-family:var(--font);font-size:13.5px;font-weight:700;color:var(--text);cursor:pointer}
+.tenant-sel .dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+.tenant-sel .chev{color:var(--text-2)}
+.live-pill{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:800;color:var(--green);background:var(--green-dim);border:1px solid rgba(46,204,113,.3);border-radius:99px;padding:6px 12px}
+.live-pill .pulse{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* BEAT RAIL */
+.beat-rail{grid-area:beat;display:flex;align-items:center;padding:0 14px;background:var(--bg-2);border-bottom:1px solid var(--border);overflow-x:auto}
+.beat{display:flex;align-items:center;gap:9px;padding:0 15px;height:100%;font-family:var(--font);font-size:13.5px;font-weight:600;color:var(--text-2);white-space:nowrap;border:0;border-bottom:2px solid transparent;background:transparent;cursor:pointer}
+.beat:hover{color:var(--text)}
+.beat.on{color:var(--text);font-weight:800;border-bottom-color:var(--accent)}
+.beat .num{width:21px;height:21px;border-radius:50%;background:var(--bg-4);color:var(--text-2);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.beat.on .num{background:var(--accent);color:#000}
+.beat .arrow{color:var(--text-3);margin-left:7px;font-size:14px}
+
+.back-btn{display:flex;align-items:center;gap:6px;font:inherit;font-size:13px;font-weight:800;color:var(--text-2);background:var(--bg-3);border:1px solid var(--border-2);border-radius:var(--radius);padding:7px 13px;margin-right:12px;cursor:pointer;font-family:var(--font)}
+.back-btn:hover{color:var(--text);border-color:var(--accent-border)}
+.tbl tr.grp td{background:var(--bg-3);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);padding:8px 13px}
+.b-hitl{background:var(--blue-dim);color:var(--blue)}
+.hitl{background:var(--blue-dim);border:1px solid rgba(77,141,255,.35);border-left:3px solid var(--blue);border-radius:var(--radius-lg);padding:17px 19px;margin-top:14px}
+.hitl h3{font-size:16px;font-weight:800;color:var(--blue);margin-bottom:5px}
+.hitl p{font-size:14px;font-weight:500;color:var(--text-2);line-height:1.6}
+.hitl .acts{display:flex;flex-wrap:wrap;gap:9px;margin-top:13px;align-items:center}
+.hitl .acts button{font:inherit;font-family:var(--font);font-weight:800;font-size:13.5px;padding:10px 17px;border-radius:var(--radius);cursor:pointer;border:1px solid transparent}
+.btn-approve{background:var(--green);color:#04210f}
+.btn-hold{background:var(--bg-4);color:var(--text);border:1px solid var(--border-2)}
+.btn-block{background:var(--red);color:#fff}
+.hitl .decided{font-size:13.5px;font-weight:700;color:var(--green);display:none}
+
+/* SIDEBAR */
+.sidebar{grid-area:sidebar;background:var(--bg-2);border-right:1px solid var(--border);padding:16px 12px;display:flex;flex-direction:column;gap:3px;overflow-y:auto}
+.nav-label{font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--text-2);padding:14px 10px 7px}
+.nav-item{display:flex;align-items:center;gap:11px;width:100%;padding:10px 12px;border-radius:var(--radius);font-family:var(--font);font-size:15px;font-weight:700;text-align:left;color:var(--text-2);cursor:pointer;border:1px solid transparent;background:transparent}
+.nav-item:hover{background:var(--bg-3);color:var(--text)}
+.nav-item.on{background:var(--accent-dim);color:var(--accent);border-color:var(--accent-border)}
+.nav-item .ic{width:18px;text-align:center;font-size:15px}
+.nav-item.p2{color:var(--text-3);cursor:not-allowed;font-weight:600}
+.nav-item.p2:hover{background:none;color:var(--text-3)}
+.p2-tag{margin-left:auto;font-size:10px;font-weight:800;color:var(--purple);background:var(--purple-dim);border:1px solid rgba(176,107,240,.35);border-radius:99px;padding:2px 7px}
+.sidebar-foot{margin-top:auto;padding:13px 10px;font-size:11.5px;font-weight:600;color:var(--text-3);border-top:1px solid var(--border);line-height:1.6}
+
+/* MAIN */
+.main{grid-area:main;overflow-y:auto;padding:26px 30px}
+.panel{display:none}
+.panel.on{display:block;animation:fade .25s ease-out}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.page-head{margin-bottom:22px}
+.page-head h1{font-size:24px;font-weight:900;letter-spacing:-.015em;margin-bottom:6px}
+.page-head p{font-size:15px;font-weight:500;color:var(--text-2);max-width:720px;line-height:1.6}
+.beat-tag{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--accent);background:var(--accent-dim);border:1px solid var(--accent-border);border-radius:99px;padding:5px 12px;margin-bottom:14px}
+
+/* cards / grid */
+.grid{display:grid;gap:14px}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2{grid-template-columns:1fr 1fr}
+.card{background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-lg);padding:18px}
+.card-h{font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--text-2);margin-bottom:12px}
+.stat .k{font-size:12px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:9px}
+.stat .v{font-size:30px;font-weight:800;font-family:var(--mono);line-height:1}
+.stat .s{font-size:12.5px;font-weight:500;color:var(--text-2);margin-top:7px}
+
+/* alert banner */
+.alert{display:flex;align-items:flex-start;gap:14px;background:var(--red-dim);border:1px solid rgba(240,82,82,.35);border-radius:var(--radius-lg);padding:17px 19px;margin-bottom:18px}
+.alert .ic{font-size:24px;flex-shrink:0}
+.alert h3{font-size:16px;font-weight:800;color:var(--red);margin-bottom:4px}
+.alert p{font-size:14px;font-weight:500;color:var(--text-2);line-height:1.6}
+.cta{background:var(--accent);color:#000;border:none;font:inherit;font-weight:800;font-size:14px;padding:11px 18px;border-radius:var(--radius);cursor:pointer;white-space:nowrap}
+.alert .cta{margin-left:auto;align-self:center;background:var(--red);color:#fff}
+
+/* table */
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl caption{text-align:left;padding:0 0 10px;font-size:12px;font-weight:700;color:var(--text-2)}
+.tbl th{text-align:left;padding:10px 13px;font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--text-2);border-bottom:1px solid var(--border-2)}
+.tbl td{padding:12px 13px;border-bottom:1px solid var(--border);color:var(--text-2);font-weight:500}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr.clickable{cursor:pointer}
+.tbl tr.clickable:hover td{background:var(--bg-3)}
+.tbl td .agent{color:var(--text);font-weight:700;font-family:var(--mono);font-size:13px}
+.text-nav{font:inherit;font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);background:none;border:0;padding:0;cursor:pointer}
+.text-nav:hover{color:var(--accent)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700;white-space:nowrap}
+.b-red{background:var(--red-dim);color:var(--red)}
+.b-orange{background:var(--orange-dim);color:var(--orange)}
+.b-green{background:var(--green-dim);color:var(--green)}
+.b-blue{background:var(--blue-dim);color:var(--blue)}
+.b-purple{background:var(--purple-dim);color:var(--purple)}
+.shadow-flag{font-size:10.5px;font-weight:800;color:var(--red);background:var(--red-dim);border:1px solid rgba(240,82,82,.35);border-radius:99px;padding:2px 8px;margin-left:8px}
+
+/* ===== setup / connect steps ===== */
+.steps{display:flex;flex-direction:column;gap:14px}
+.step{display:grid;grid-template-columns:42px 1fr auto;gap:16px;align-items:start;background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-lg);padding:18px 20px}
+.step .sn{width:42px;height:42px;border-radius:50%;background:var(--accent-dim);border:1px solid var(--accent-border);color:var(--accent);font-weight:800;font-size:18px;font-family:var(--mono);display:flex;align-items:center;justify-content:center}
+.step.done .sn{background:var(--green-dim);border-color:rgba(46,204,113,.35);color:var(--green)}
+.step h3{font-size:16px;font-weight:800;margin-bottom:5px}
+.step p{font-size:14px;font-weight:500;color:var(--text-2);line-height:1.6}
+.step .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.conn{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;background:var(--bg-3);border:1px solid var(--border-2);border-radius:var(--radius);padding:7px 12px}
+.conn .ok{color:var(--green);font-weight:800}
+.step .status{align-self:center;font-size:13px;font-weight:800}
+.progress{height:9px;background:var(--bg-4);border-radius:5px;overflow:hidden;margin-top:12px}
+.progress>span{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--green));border-radius:5px}
+.note{font-size:13px;font-weight:600;color:var(--text-2);background:var(--bg-3);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--radius);padding:12px 15px;margin-top:16px;line-height:1.6}
+.note b{color:var(--text)}
+.evidence{margin-top:14px;background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-lg);padding:14px 16px}
+.evidence summary{cursor:pointer;list-style:none;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--accent)}
+.evidence summary::-webkit-details-marker{display:none}
+.evidence summary::after{content:'+';float:right;color:var(--text-2);font-family:var(--mono)}
+.evidence[open] summary::after{content:'-'}
+.evidence-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+.ev{background:var(--bg-3);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px}
+.ev .k{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);margin-bottom:5px}
+.ev .v{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--text);line-height:1.45}
+
+/* ===== SIGNATURE: skill-score gauge ===== */
+.score-wrap{display:grid;grid-template-columns:210px 1fr;gap:26px;align-items:start}
+.score-orb{text-align:center}
+.gauge{position:relative;width:180px;height:180px;margin:0 auto}
+.gauge svg{transform:rotate(-90deg)}
+.gauge .val{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.gauge .val .n{font-size:46px;font-weight:900;font-family:var(--mono);line-height:1}
+.gauge .val .d{font-size:12px;font-weight:700;color:var(--text-2);margin-top:3px}
+.verdict{margin-top:15px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;padding:7px 14px;border-radius:99px;display:inline-block}
+.dims{display:flex;flex-direction:column;gap:11px}
+.dim{display:grid;grid-template-columns:175px 1fr 32px;align-items:center;gap:14px}
+.dim .nm{font-size:13.5px;font-weight:600;color:var(--text)}
+.dim .bar{height:10px;background:var(--bg-4);border-radius:5px;overflow:hidden}
+.dim .bar > span{display:block;height:100%;border-radius:5px}
+.dim .sc{font-size:14px;font-family:var(--mono);font-weight:800;text-align:right}
+.dim.p2 .nm{color:var(--text-3);font-weight:500}
+.flags{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.flag{font-size:12.5px;font-family:var(--mono);font-weight:600;background:var(--bg-3);border:1px solid var(--border-2);border-radius:6px;padding:5px 10px;color:var(--text-2)}
+.flag b{color:var(--accent);font-weight:800}
+
+/* splunk view */
+.splunk-head{display:flex;align-items:center;gap:11px;margin-bottom:16px}
+.splunk-logo{width:30px;height:30px;border-radius:7px;background:var(--splunk);color:#06210a;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12px}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.field label{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--text-2)}
+.field .inp{background:var(--bg-3);border:1px solid var(--border-2);border-radius:var(--radius);padding:10px 13px;font-family:var(--mono);font-size:13px;font-weight:600;color:var(--text)}
+.field .inp.mask{letter-spacing:2px}
+.spl{background:#080a0e;border:1px solid var(--border-2);border-radius:var(--radius);padding:15px 17px;font-family:var(--mono);font-size:13.5px;font-weight:600;line-height:1.85;color:var(--text);overflow-x:auto;white-space:pre}
+.spl .cmd{color:var(--splunk)}
+.spl .fn{color:var(--blue)}
+.spl .str{color:var(--accent)}
+.spl .cmt{color:var(--text-3)}
+.flow-chain{display:flex;align-items:stretch;border:1px solid var(--border-2);border-radius:var(--radius-lg);overflow:hidden;margin:16px 0}
+.fc{flex:1;padding:15px 12px;text-align:center}
+.fc+.fc{border-left:1px solid var(--border)}
+.fc .ic{font-size:20px;margin-bottom:6px}
+.fc .nm{font-size:12.5px;font-weight:800;margin-bottom:3px}
+.fc .sub{font-size:11.5px;font-weight:500;color:var(--text-2);line-height:1.4}
+.fc .arr{color:var(--text-3);font-size:18px}
+.notable{background:var(--bg-2);border:1px solid rgba(240,82,82,.35);border-left:3px solid var(--red);border-radius:var(--radius);padding:16px 18px;margin-top:14px}
+.notable .ttl{display:flex;align-items:center;gap:11px;font-size:14.5px;font-weight:800;margin-bottom:10px}
+.kv{display:grid;grid-template-columns:140px 1fr;gap:6px 14px;font-size:13.5px}
+.kv .k{color:var(--text-2);font-weight:600}
+.kv .v{color:var(--text);font-family:var(--mono);font-size:12.5px;font-weight:600}
+.risk-meter{display:flex;align-items:center;gap:11px;margin-top:12px}
+.risk-meter .track{flex:1;height:11px;background:var(--bg-4);border-radius:6px;overflow:hidden}
+.risk-meter .track > span{display:block;height:100%;background:linear-gradient(90deg,var(--orange),var(--red));border-radius:6px}
+
+/* enforcement */
+.sched{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin:15px 0}
+.day{background:var(--bg-3);border:1px solid var(--border-2);border-radius:var(--radius);padding:11px 8px;text-align:center}
+.day .d{font-size:11px;font-weight:800;color:var(--text-2);text-transform:uppercase;margin-bottom:7px}
+.day .win{font-size:12.5px;font-family:var(--mono);font-weight:700;color:var(--green)}
+.day.off .win{color:var(--text-3)}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--bg-3);border:1px solid var(--border-2);border-radius:var(--radius);margin-bottom:8px}
+.sw{width:42px;height:24px;background:var(--accent);border:0;border-radius:99px;position:relative;flex-shrink:0;cursor:pointer}
+.sw::after{content:'';position:absolute;top:2px;right:2px;width:20px;height:20px;background:#000;border-radius:50%}
+.sw.off{background:var(--bg-4)}
+.sw.off::after{right:auto;left:2px;background:var(--text-3)}
+.breakglass{background:var(--orange-dim);border:1px solid rgba(251,146,60,.35);border-radius:var(--radius);padding:16px 18px;margin-top:14px}
+
+/* compliance */
+.cert{display:flex;align-items:center;gap:15px;background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:14px}
+.cert .seal{width:50px;height:50px;border-radius:11px;background:var(--green-dim);border:1px solid rgba(46,204,113,.35);display:flex;align-items:center;justify-content:center;font-size:24px}
+.cert h3{font-size:16px;font-weight:800}
+.cert p{font-size:13.5px;font-weight:500;color:var(--text-2)}
+.cert .exp{margin-left:auto;background:var(--green);color:#04210f;border:none;font:inherit;font-weight:800;font-size:14px;padding:11px 18px;border-radius:var(--radius);cursor:pointer}
+.std-row{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--border);font-size:14.5px;font-weight:600}
+.std-row:last-child{border-bottom:none}
+.std-row .nm{color:var(--text)}
+.std-row.dim .nm{color:var(--text-3)}
+.callout{font-size:12.5px;font-weight:600;color:var(--text-2);margin-top:8px}
+.btn-row{text-align:right;margin-top:18px}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="logo">
+      <div class="logo-mark">S</div>
+      <div>
+        <div class="logo-name">SecureLayer</div>
+        <div class="logo-stealth">EDR for the Agentic Era · Phase 1</div>
+      </div>
+    </div>
+    <span class="mode-pill">⬡ MSSP CONSOLE</span>
+    <button class="tenant-sel" type="button" aria-label="Current tenant: BlueSky Software">
+      <span class="dot"></span> BlueSky Software <span class="chev">▾</span>
+    </button>
+    <div class="live-pill"><span class="pulse"></span> LIVE</div>
+  </header>
+
+  <!-- BEAT RAIL -->
+  <nav class="beat-rail" id="beatRail">
+    <button class="back-btn" id="backBtn" style="visibility:hidden">← Back</button>
+    <button class="beat on" type="button" data-go="connect"><span class="num">1</span> Connect <span class="arrow">›</span></button>
+    <button class="beat" type="button" data-go="dashboard"><span class="num">2</span> Discover <span class="arrow">›</span></button>
+    <button class="beat" type="button" data-go="skills"><span class="num">3</span> Score <span class="arrow">›</span></button>
+    <button class="beat" type="button" data-go="splunk"><span class="num">4</span> Splunk <span class="arrow">›</span></button>
+    <button class="beat" type="button" data-go="enforce"><span class="num">5</span> Enforce <span class="arrow">›</span></button>
+    <button class="beat" type="button" data-go="audit"><span class="num">6</span> Audit</button>
+  </nav>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="nav-label">Phase 1</div>
+    <button class="nav-item on" type="button" data-go="connect"><span class="ic">🔌</span> Connect &amp; Scan</button>
+    <button class="nav-item" type="button" data-go="dashboard"><span class="ic">▣</span> Dashboard</button>
+    <button class="nav-item" type="button" data-go="skills"><span class="ic">◎</span> Skill Registry</button>
+    <button class="nav-item" type="button" data-go="splunk"><span class="ic">📡</span> Splunk Integration</button>
+    <button class="nav-item" type="button" data-go="enforce"><span class="ic">🛡</span> Enforcement</button>
+    <button class="nav-item" type="button" data-go="audit"><span class="ic">📋</span> Compliance</button>
+    <button class="nav-item p2" type="button" disabled><span class="ic">🗺</span> Phase 2 Roadmap <span class="p2-tag">P2</span></button>
+    <div class="sidebar-foot">Grounded in ARCHITECTURE_V6<br/>BlueSky Software · 14 endpoints</div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ===== BEAT 1: CONNECT & SCAN ===== -->
+    <section class="panel on" id="connect">
+      <div class="beat-tag">◉ Beat 1 — Onboard a client (no endpoint agent)</div>
+      <div class="page-head">
+        <h1>Connect BlueSky Software</h1>
+        <p>How an MSSP brings a client online. Phase 1 is cloud-side discovery — the MSSP authorizes read access, SecureLayer scans, and risk appears in minutes. No new agent is installed on developer machines for discovery.</p>
+      </div>
+
+      <div class="steps">
+        <div class="step done">
+          <div class="sn">1</div>
+          <div>
+            <h3>Connect the client's sources</h3>
+            <p>The MSSP authorizes read-only access to the client's code and tooling. OAuth only — no credentials stored, no software pushed to endpoints. RMM is linked now so enforcement (Beat 5) can be pushed later through the same pipe.</p>
+            <div class="meta">
+              <span class="conn">🐙 GitHub org: bluesky-sw <span class="ok">✓ connected</span></span>
+              <span class="conn">🛰 NinjaOne RMM <span class="ok">✓ linked</span></span>
+              <span class="conn">📡 Splunk Cloud <span class="ok">✓ linked</span></span>
+            </div>
+          </div>
+          <div class="status" style="color:var(--green)">Done</div>
+        </div>
+
+        <div class="step done">
+          <div class="sn">2</div>
+          <div>
+            <h3>Run the discovery scan</h3>
+            <p>SecureLayer scans the client's repos for AI agent configs (<span class="mono">.claude</span>, <span class="mono">.cursor</span>, Copilot settings) and parses MCP manifests (<span class="mono">.mcp.json</span>) to inventory every agent, connector, and the skills each can invoke. Runs cloud-side in minutes.</p>
+            <div class="progress"><span style="width:100%"></span></div>
+            <div class="callout">Scanned 142 repos · parsed 9 MCP manifests · 41 skills extracted · 00:47 elapsed</div>
+          </div>
+          <div class="status" style="color:var(--green)">100%</div>
+        </div>
+
+        <div class="step">
+          <div class="sn">3</div>
+          <div>
+            <h3>Review what was found</h3>
+            <p>The scan inventoried <b style="color:var(--text)">7 agents</b> and <b style="color:var(--text)">3 MCP servers</b> — one of them unsanctioned. Every skill is scored. The MSSP sees the client's AI-agent posture for the first time.</p>
+            <div class="meta">
+              <span class="badge b-blue">7 agents</span>
+              <span class="badge b-orange">3 MCP servers · 1 shadow</span>
+              <span class="badge b-red">3 critical ≥ 8.0 · 1 blocked, 2 HITL</span>
+            </div>
+          </div>
+          <div class="status"><button class="cta" data-go="dashboard">See findings →</button></div>
+        </div>
+      </div>
+
+      <div class="note"><b>Phase 1 discovery has no endpoint footprint.</b> The scan is OAuth + cloud-side — nothing to install for discovery, and a compromised host can't disable it or forge an all-clear. Enforcement (Beat 5) is delivered through your existing RMM as policy, not a SecureLayer endpoint agent. Coverage is scoped to the sources you connect.</div>
+      <details class="evidence">
+        <summary>Evidence drawer — onboarding sources</summary>
+        <div class="evidence-grid">
+          <div class="ev"><div class="k">OAuth scope</div><div class="v">repo:read · org:read</div></div>
+          <div class="ev"><div class="k">Scan job</div><div class="v">scan_2026_0529_0047</div></div>
+          <div class="ev"><div class="k">RMM mapping</div><div class="v">NinjaOne device group: dev-workstations</div></div>
+          <div class="ev"><div class="k">Splunk target</div><div class="v">index=security · sourcetype=slb:alert</div></div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ===== BEAT 2: DISCOVER ===== -->
+    <section class="panel" id="dashboard">
+      <div class="beat-tag">◉ Beat 2 — Discovery</div>
+      <div class="page-head">
+        <h1>Client posture — BlueSky Software</h1>
+        <p>Scan complete. SecureLayer inventoried every AI agent and MCP server visible across the client's connected code and tooling — including one nobody knew was running.</p>
+      </div>
+
+      <div class="alert">
+        <span class="ic">⚠️</span>
+        <div>
+          <h3>Shadow AI discovered — unsanctioned MCP server</h3>
+          <p><b class="mono" style="color:var(--text)">browser-fetch</b> MCP server is declared in repo config for <span class="mono">DEVLAPTOP-A14</span>, mapped through the client's RMM inventory to Alice's developer device. It has network egress + credential access and was never registered with the MSSP. Nobody knew it was there.</p>
+        </div>
+        <button class="cta" data-go="skills">Score it →</button>
+      </div>
+
+      <div class="grid g4" style="margin-bottom:18px">
+        <div class="card stat"><div class="k">Agents found</div><div class="v">7</div><div class="s">Claude Code, Cursor, Copilot, Codex</div></div>
+        <div class="card stat"><div class="k">MCP servers</div><div class="v" style="color:var(--orange)">3</div><div class="s">1 unsanctioned (shadow)</div></div>
+        <div class="card stat"><div class="k">Critical skills</div><div class="v" style="color:var(--red)">3</div><div class="s">≥ 8.0 · 1 blocked, 2 held for MSSP</div></div>
+        <div class="card stat"><div class="k">Tenant risk</div><div class="v" style="color:var(--orange)">68</div><div class="s">feeds Splunk RBA →</div></div>
+      </div>
+
+      <div class="card">
+        <table class="tbl">
+          <caption>Discovered AI agents, MCP servers, highest skill score, and policy disposition for BlueSky Software.</caption>
+          <thead><tr><th scope="col">Asset / skill</th><th scope="col">Type</th><th scope="col">Endpoint</th><th scope="col">Skills</th><th scope="col">Top score</th><th scope="col">Disposition</th></tr></thead>
+          <tbody>
+            <tr class="grp"><td colspan="6">MCP servers · 3 discovered</td></tr>
+            <tr>
+              <td><button class="text-nav" type="button" data-go="skills">browser-fetch</button><span class="shadow-flag">SHADOW</span></td>
+              <td>MCP server</td><td class="mono" style="font-size:13px">DEVLAPTOP-A14</td><td>5</td>
+              <td><span class="badge b-orange">6.8 review</span></td><td><span class="badge b-orange">pending review</span></td>
+            </tr>
+            <tr>
+              <td><span class="agent">postgres-mcp · db-export</span></td><td>MCP server</td><td class="mono" style="font-size:13px">DBHOST-01</td><td>4</td>
+              <td><span class="badge b-red">8.1 critical</span></td><td><span class="badge b-hitl">⛑ held — MSSP</span></td>
+            </tr>
+            <tr>
+              <td><span class="agent">filesystem-mcp</span></td><td>MCP server</td><td class="mono" style="font-size:13px">multiple</td><td>3</td>
+              <td><span class="badge b-orange">3.4 review</span></td><td><span class="badge b-orange">pending review</span></td>
+            </tr>
+            <tr class="grp"><td colspan="6">Agents · 7 discovered</td></tr>
+            <tr>
+              <td><button class="text-nav" type="button" data-go="skills">cursor · shell-exec-sudo</button></td><td>Cursor agent</td><td class="mono" style="font-size:13px">BUILDBOX-02</td><td>1</td>
+              <td><span class="badge b-red">9.8 critical</span></td><td><span class="badge b-red">auto-blocked</span></td>
+            </tr>
+            <tr>
+              <td><button class="text-nav" type="button" data-go="skills">cursor · env-reader</button></td><td>Cursor agent</td><td class="mono" style="font-size:13px">DEVLAPTOP-A14</td><td>3</td>
+              <td><span class="badge b-red">9.2 critical</span></td><td><span class="badge b-hitl">⛑ held — MSSP</span></td>
+            </tr>
+            <tr>
+              <td><span class="agent">claude-code · file-write-bulk</span></td><td>Claude Code</td><td class="mono" style="font-size:13px">DEVLAPTOP-A14</td><td>4</td>
+              <td><span class="badge b-orange">5.4 review</span></td><td><span class="badge b-orange">pending review</span></td>
+            </tr>
+            <tr>
+              <td><span class="agent">claude-code · dependency-install</span></td><td>Claude Code</td><td class="mono" style="font-size:13px">BUILDBOX-02</td><td>2</td>
+              <td><span class="badge b-orange">6.1 review</span></td><td><span class="badge b-orange">pending review</span></td>
+            </tr>
+            <tr>
+              <td><span class="agent">claude-code · git-push</span></td><td>Claude Code</td><td class="mono" style="font-size:13px">DEVLAPTOP-A14</td><td>4</td>
+              <td><span class="badge b-green">2.1 low</span></td><td><span class="badge b-green">auto-approved</span></td>
+            </tr>
+            <tr>
+              <td><span class="agent">codex · code-completion</span></td><td>Codex</td><td class="mono" style="font-size:13px">multiple</td><td>1</td>
+              <td><span class="badge b-green">1.8 low</span></td><td><span class="badge b-green">auto-approved</span></td>
+            </tr>
+            <tr>
+              <td><span class="agent">copilot · inline-suggest</span></td><td>Copilot</td><td class="mono" style="font-size:13px">multiple</td><td>1</td>
+              <td><span class="badge b-green">1.3 low</span></td><td><span class="badge b-green">auto-approved</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <details class="evidence">
+        <summary>Evidence drawer — shadow MCP source</summary>
+        <div class="evidence-grid">
+          <div class="ev"><div class="k">Manifest path</div><div class="v">repos/web-app/.mcp.json</div></div>
+          <div class="ev"><div class="k">Commit</div><div class="v">8f41c2e · added browser-fetch</div></div>
+          <div class="ev"><div class="k">Device map</div><div class="v">alice@bluesky.io -> DEVLAPTOP-A14</div></div>
+          <div class="ev"><div class="k">Registry status</div><div class="v">not in approved_mcp_servers.yaml</div></div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ===== BEAT 3: SCORE ===== -->
+    <section class="panel" id="skills">
+      <div class="beat-tag">◉ Beat 3 — The Skill Score (what no one else has)</div>
+      <div class="page-head">
+        <h1>Skill score — <span class="mono">browser-fetch</span> · network-fetch</h1>
+        <p>Competitors score the <em>asset</em>. SecureLayer scores every <em>skill</em> across 10 dimensions and acts at that granularity — auto-approve ≤ 3.0, review 3.1–7.9, and critical ≥ 8.0 → <b style="color:var(--text)">block, or hold for a human MSSP decision (HITL)</b>. The MSSP sets the policy per client.</p>
+      </div>
+
+      <div class="card">
+        <div class="score-wrap">
+          <div class="score-orb">
+            <div class="gauge">
+              <svg width="180" height="180" viewBox="0 0 180 180">
+                <circle cx="90" cy="90" r="78" fill="none" stroke="var(--bg-4)" stroke-width="13"/>
+                <circle cx="90" cy="90" r="78" fill="none" stroke="var(--orange)" stroke-width="13" stroke-linecap="round"
+                  stroke-dasharray="490" stroke-dashoffset="157"/>
+              </svg>
+              <div class="val"><div class="n" style="color:var(--orange)">6.8</div><div class="d">/ 10 overall</div></div>
+            </div>
+            <div class="verdict" style="background:var(--orange-dim);color:var(--orange)">Pending review</div>
+          </div>
+          <div>
+            <div class="dims">
+              <div class="dim"><span class="nm">Permission Scope</span><span class="bar"><span style="width:60%;background:var(--orange)"></span></span><span class="sc" style="color:var(--orange)">6</span></div>
+              <div class="dim"><span class="nm">Network Egress</span><span class="bar"><span style="width:90%;background:var(--red)"></span></span><span class="sc" style="color:var(--red)">9</span></div>
+              <div class="dim"><span class="nm">Credential Access</span><span class="bar"><span style="width:70%;background:var(--orange)"></span></span><span class="sc" style="color:var(--orange)">7</span></div>
+              <div class="dim"><span class="nm">File System Reach</span><span class="bar"><span style="width:40%;background:var(--accent)"></span></span><span class="sc" style="color:var(--accent)">4</span></div>
+              <div class="dim"><span class="nm">Shell Execution</span><span class="bar"><span style="width:20%;background:var(--green)"></span></span><span class="sc" style="color:var(--green)">2</span></div>
+              <div class="dim"><span class="nm">Sub-skill Depth</span><span class="bar"><span style="width:30%;background:var(--green)"></span></span><span class="sc" style="color:var(--green)">3</span></div>
+              <div class="dim"><span class="nm">Identity Verifiability</span><span class="bar"><span style="width:50%;background:var(--accent)"></span></span><span class="sc" style="color:var(--accent)">5</span></div>
+              <div class="dim"><span class="nm">Supply Chain Risk</span><span class="bar"><span style="width:80%;background:var(--red)"></span></span><span class="sc" style="color:var(--red)">8</span></div>
+              <div class="dim"><span class="nm">Prompt Injection Risk</span><span class="bar"><span style="width:70%;background:var(--orange)"></span></span><span class="sc" style="color:var(--orange)">7</span></div>
+              <div class="dim"><span class="nm">Behavioral Anomaly</span><span class="bar"><span style="width:0%"></span></span><span class="sc" style="color:var(--text-3)">—</span></div>
+            </div>
+            <div class="flags">
+              <span class="flag"><b>SI-002</b> Supply chain · nested dependency → T1195.001</span>
+              <span class="flag"><b>PI-003</b> Prompt injection susceptibility → T1566</span>
+            </div>
+            <div class="note">
+              <b>Why 6.8?</b> Formula: weighted mean of the scored dimensions, with unavailable runtime-only dimensions excluded for Phase 1 discovery. Evidence source: MCP manifest + repo dependency graph + RMM device mapping. Confidence: 0.82, because no endpoint sensor has confirmed runtime behavior. Policy outcome: review, not block.
+            </div>
+          </div>
+        </div>
+      </div>
+      <details class="evidence">
+        <summary>Evidence drawer — score inputs</summary>
+        <div class="evidence-grid">
+          <div class="ev"><div class="k">Skill source</div><div class="v">network-fetch in .mcp.json</div></div>
+          <div class="ev"><div class="k">High drivers</div><div class="v">egress=9 · supply_chain=8</div></div>
+          <div class="ev"><div class="k">Confidence</div><div class="v">0.82 · static + inventory</div></div>
+          <div class="ev"><div class="k">Disposition</div><div class="v">3.1-7.9 -> analyst review</div></div>
+        </div>
+      </details>
+
+      <div class="grid g3" style="margin-top:14px">
+        <div class="card">
+          <div class="card-h" style="font-family:var(--mono)">Auto-blocked (policy)</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0"><span class="mono" style="font-size:13px;font-weight:700">shell-exec-sudo</span><span class="badge b-red">9.8 → blocked</span></div>
+        </div>
+        <div class="card" style="border-color:rgba(77,141,255,.35)">
+          <div class="card-h" style="font-family:var(--mono);color:var(--blue)">⛑ Held for MSSP (HITL)</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)"><span class="mono" style="font-size:13px;font-weight:700">env-reader</span><span class="badge b-hitl">9.2 → held</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0"><span class="mono" style="font-size:13px;font-weight:700">db-export</span><span class="badge b-hitl">8.1 → held</span></div>
+        </div>
+        <div class="card">
+          <div class="card-h" style="font-family:var(--mono)">Auto-approved (≤ 3.0)</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)"><span class="mono" style="font-size:13px;font-weight:700">git-push</span><span class="badge b-green">2.1 → ok</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0"><span class="mono" style="font-size:13px;font-weight:700">inline-suggest</span><span class="badge b-green">1.3 → ok</span></div>
+        </div>
+      </div>
+
+      <div class="hitl">
+        <h3>⛑ Critical action held — MSSP decision required</h3>
+        <p><span class="mono" style="color:var(--text);font-weight:700">cursor · env-reader</span> on <span class="mono" style="color:var(--text)">DEVLAPTOP-A14</span> scored <b style="color:var(--text)">9.2</b> (credential access 10/10). Policy for this client is <b style="color:var(--text)">human-in-the-loop</b>: the action is paused, not silently blocked. A critical notification was pushed to the MSSP — you decide before anything is enforced.</p>
+        <div class="acts">
+          <button class="btn-approve" data-dec="✓ Approved once — env-reader allowed for this session only · logged to compliance · pushed to Splunk">Approve once</button>
+          <button class="btn-hold" data-dec="⏸ Holding — action stays paused · developer notified · awaiting your evidence">Keep holding</button>
+          <button class="btn-block" data-dec="⛔ Blocked + policy added — env-reader now auto-blocks for this tenant · logged · pushed to Splunk">Block + add policy</button>
+          <span class="decided" id="hitlDecided" aria-live="polite"></span>
+        </div>
+      </div>
+
+      <div class="btn-row"><button class="cta" style="background:var(--splunk);color:#06210a" data-go="splunk">See it in Splunk →</button></div>
+    </section>
+
+    <!-- ===== BEAT 4: SPLUNK ===== -->
+    <section class="panel" id="splunk">
+      <div class="beat-tag" style="color:var(--splunk);background:var(--splunk-dim);border-color:rgba(123,192,67,.35)">◉ Beat 4 — Lands in the tool you already run</div>
+      <div class="splunk-head">
+        <div class="splunk-logo">Sp</div>
+        <div class="page-head" style="margin-bottom:0">
+          <h1>Splunk integration</h1>
+          <p>Set up once: point SecureLayer at your Splunk HEC. The Phase 1 MVP emits V6-shaped Splunk events now, while the full V6 plan extends this into richer SIEM and RMM integration. <b style="color:var(--text)">Splunk alerts fire on the agent risk the skill score drives</b> — and any automation you already run (SOAR, ticketing, or a Splunk alert action) can act on them. No new console, no tool you don't already own.</p>
+        </div>
+      </div>
+
+      <!-- SETUP CARD -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-h">Integration setup — Splunk HEC</div>
+        <div class="grid g2">
+          <div>
+            <div class="field"><label>HEC endpoint</label><div class="inp">https://bluesky.splunkcloud.com:8088</div></div>
+            <div class="field"><label>HEC token</label><div class="inp mask">••••••••••••••••••••••3f9a</div></div>
+          </div>
+          <div>
+            <div class="field"><label>Index</label><div class="inp">security</div></div>
+            <div class="field"><label>Sourcetype · Format</label><div class="inp">slb:alert · Splunk CIM</div></div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;margin-top:6px">
+          <span class="badge b-green">✓ Connection tested</span>
+          <span class="callout" style="margin:0">MVP path: HEC delivery + retry status visible · V6 full plan: DLQ replay + multi-SIEM formatter</span>
+        </div>
+      </div>
+
+      <div class="card-h" style="margin-bottom:10px">How a skill score becomes a Splunk alert</div>
+      <div class="flow-chain">
+        <div class="fc" style="background:var(--accent-dim)"><div class="ic">⬡</div><div class="nm" style="color:var(--accent)">SecureLayer</div><div class="sub">skill score → HEC event</div></div>
+        <div class="fc"><div class="arr">→</div></div>
+        <div class="fc" style="background:var(--splunk-dim)"><div class="ic">📊</div><div class="nm" style="color:var(--splunk)">Splunk</div><div class="sub">score raises the agent's risk</div></div>
+        <div class="fc"><div class="arr">→</div></div>
+        <div class="fc" style="background:var(--red-dim)"><div class="ic">🔔</div><div class="nm" style="color:var(--red)">Splunk alert</div><div class="sub">fires when risk crosses your threshold</div></div>
+        <div class="fc"><div class="arr">→</div></div>
+        <div class="fc" style="background:var(--bg-3)"><div class="ic">⚙</div><div class="nm">Your tools</div><div class="sub">notify, ticket, or automate — with what you already run</div></div>
+      </div>
+
+      <div class="grid g2">
+        <div class="card">
+          <div class="card-h" style="font-family:var(--mono)">Splunk transport fields · HEC wrapper</div>
+          <div class="spl"><span class="cmt"># Full HEC wrapper, aligned to V6 SIEM formatter</span>
+{
+  <span class="str">"time"</span>: <span class="str">1772258575</span>,
+  <span class="str">"host"</span>: <span class="str">"DEVLAPTOP-A14"</span>,
+  <span class="str">"source"</span>: <span class="str">"security-layer"</span>,
+  <span class="str">"sourcetype"</span>: <span class="str">"slb:alert"</span>,
+  <span class="str">"index"</span>: <span class="str">"security"</span>,
+  <span class="str">"event"</span>: { ... normalized event fields ... }
+}</div>
+        </div>
+        <div class="card">
+          <div class="card-h" style="font-family:var(--mono)">Normalized event fields · agent risk object</div>
+          <div class="spl">{
+  <span class="str">"action"</span>: <span class="str">"held"</span>,
+  <span class="str">"app"</span>: <span class="str">"Cursor"</span>,
+  <span class="str">"src_user"</span>: <span class="str">"alice@bluesky.io"</span>,
+  <span class="str">"dest"</span>: <span class="str">"DEVLAPTOP-A14"</span>,
+  <span class="str">"vendor"</span>: <span class="str">"SecureLayer"</span>,
+  <span class="str">"severity"</span>: <span class="str">"CRITICAL"</span>,
+  <span class="str">"agent"</span>: <span class="str">"cursor"</span>,
+  <span class="str">"skill"</span>: <span class="str">"env-reader"</span>,
+  <span class="str">"skill_score"</span>: <span class="str">9.2</span>,
+  <span class="str">"rule_id"</span>: <span class="str">"CE-001"</span>,
+  <span class="str">"att_ck_id"</span>: <span class="str">"T1552.001"</span>,
+  <span class="str">"risk_object_type"</span>: <span class="str">"agent"</span>,
+  <span class="str">"risk_object"</span>: <span class="str">"agent:cursor"</span>,
+  <span class="str">"tenant_id"</span>: <span class="str">"bluesky-sw"</span>,
+  <span class="str">"tenant_name"</span>: <span class="str">"BlueSky Software"</span>
+}</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <div class="card-h" style="font-family:var(--mono)">Analyst SPL — risk by agent</div>
+        <div class="spl"><span class="cmd">sourcetype</span>=<span class="str">"slb:alert"</span> severity IN(<span class="str">"CRITICAL","HIGH"</span>)
+| <span class="cmd">eval</span> risk_score=<span class="fn">round</span>(skill_score*10,0)
+| <span class="cmd">stats</span> <span class="fn">max</span>(risk_score) <span class="cmd">as</span> agent_risk
+    <span class="fn">values</span>(skill) <span class="cmd">as</span> contributing_skills
+    <span class="fn">values</span>(rule_id) <span class="fn">values</span>(att_ck_id)
+    <span class="cmd">by</span> tenant_id, risk_object
+| <span class="cmd">lookup</span> slb_tenants tenant_id <span class="cmd">OUTPUT</span> tenant_name
+| <span class="cmd">where</span> agent_risk &gt;= <span class="str">80</span>
+| <span class="cmd">sort</span> - agent_risk</div>
+        <div class="callout">Risk-object model: agent. This MVP demo treats SecureLayer as a Splunk event contributor; the risk notable shown below is representative of a Splunk ES correlation search built on these fields.</div>
+      </div>
+
+      <div class="notable">
+        <div class="ttl"><span class="badge b-red">SPLUNK ALERT · representative ES correlation</span> AI agent skill risk — bluesky-sw / agent:cursor</div>
+        <div class="kv">
+          <span class="k">Risk object</span><span class="v">agent:cursor · tenant:bluesky-sw</span>
+          <span class="k">Contributing</span><span class="v">env-reader 9.2, shell-exec-sudo 9.8</span>
+          <span class="k">MITRE ATT&CK</span><span class="v">T1552.001 · T1059</span>
+          <span class="k">Agent risk</span><span class="v">98 / 100 — threshold 80 exceeded</span>
+        </div>
+        <div class="risk-meter"><span class="mono" style="font-size:12px;font-weight:700;color:var(--text-2)">agent risk</span><div class="track"><span style="width:98%"></span></div><span class="mono" style="font-size:14px;font-weight:800;color:var(--red)">98</span></div>
+      </div>
+      <details class="evidence">
+        <summary>Evidence drawer — Splunk mapping</summary>
+        <div class="evidence-grid">
+          <div class="ev"><div class="k">Risk model</div><div class="v">risk_object_type=agent</div></div>
+          <div class="ev"><div class="k">Transport</div><div class="v">HEC -> index=security</div></div>
+          <div class="ev"><div class="k">MVP truth</div><div class="v">event contributor, not a Splunk TA</div></div>
+          <div class="ev"><div class="k">V6 extension</div><div class="v">DLQ replay + SIEM formatter</div></div>
+        </div>
+      </details>
+      <div class="btn-row"><button class="cta" data-go="enforce">Now enforce it →</button></div>
+    </section>
+
+    <!-- ===== BEAT 5: ENFORCE ===== -->
+    <section class="panel" id="enforce">
+      <div class="beat-tag">◉ Beat 5 — Enforce, via your RMM</div>
+      <div class="page-head">
+        <h1>Office Hours enforcement</h1>
+        <p>Detection is table stakes. SecureLayer enforces — policy pushed through the RMM you already linked at onboarding (NinjaOne). Block AI agent activity outside defined windows.</p>
+      </div>
+
+      <div class="card" style="margin-bottom:14px">
+        <div class="toggle-row">
+          <div><div style="font-weight:800;font-size:15px" id="officeHoursLabel">Block AI agents outside office hours</div><div style="font-size:13.5px;color:var(--text-2);margin-top:2px">BlueSky Software · MVP enforcement profile staged for NinjaOne device group: dev-workstations</div></div>
+          <button class="sw" type="button" role="switch" aria-checked="true" aria-labelledby="officeHoursLabel"></button>
+        </div>
+        <div class="sched">
+          <div class="day"><div class="d">Mon</div><div class="win">08–18</div></div>
+          <div class="day"><div class="d">Tue</div><div class="win">08–18</div></div>
+          <div class="day"><div class="d">Wed</div><div class="win">08–18</div></div>
+          <div class="day"><div class="d">Thu</div><div class="win">08–18</div></div>
+          <div class="day"><div class="d">Fri</div><div class="win">08–18</div></div>
+          <div class="day off"><div class="d">Sat</div><div class="win">blocked</div></div>
+          <div class="day off"><div class="d">Sun</div><div class="win">blocked</div></div>
+        </div>
+        <div style="font-size:13.5px;font-weight:600;color:var(--text-2)">Last block: <span class="mono" style="color:var(--text)">shell-exec-sudo</span> on <span class="mono" style="color:var(--text)">BUILDBOX-02</span> at <span class="mono" style="color:var(--text)">23:14</span> — outside window. Developer notified.</div>
+      </div>
+
+      <div class="breakglass">
+        <div style="font-weight:800;font-size:15px;color:var(--orange);margin-bottom:7px">⛑ Break-glass access — keep developers moving</div>
+        <p style="font-size:14px;font-weight:500;color:var(--text-2);line-height:1.6">When an action is blocked, the developer can request access right from their IDE. It routes to your MSSP queue with the full skill-score context — approve or deny in one click. Approvals persist for that skill and tenant, so legitimate work keeps moving.</p>
+        <div style="display:flex;gap:8px;margin-top:11px">
+          <span class="badge b-orange">1 pending request</span>
+          <span class="badge b-green">approve</span>
+          <span class="badge b-red">deny</span>
+        </div>
+      </div>
+      <details class="evidence">
+        <summary>Evidence drawer — enforcement path</summary>
+        <div class="evidence-grid">
+          <div class="ev"><div class="k">Policy</div><div class="v">office_hours_ai_block.yaml</div></div>
+          <div class="ev"><div class="k">Scope</div><div class="v">tenant=bluesky-sw · agent skills</div></div>
+          <div class="ev"><div class="k">RMM target</div><div class="v">NinjaOne group: dev-workstations</div></div>
+          <div class="ev"><div class="k">Control</div><div class="v">block outside 08:00-18:00</div></div>
+        </div>
+      </details>
+      <div class="btn-row"><button class="cta" style="background:var(--green);color:#04210f" data-go="audit">Generate audit proof →</button></div>
+    </section>
+
+    <!-- ===== BEAT 6: AUDIT ===== -->
+    <section class="panel" id="audit">
+      <div class="beat-tag" style="color:var(--green);background:var(--green-dim);border-color:rgba(46,204,113,.35)">◉ Beat 6 — Audit-ready proof</div>
+      <div class="page-head">
+        <h1>Compliance export</h1>
+        <p>Every blocked and enforced event becomes a signed, timestamped log — the proof an MSSP hands a client at QBR. Phase 1 ships one standard, done properly.</p>
+      </div>
+
+      <div class="cert">
+        <div class="seal">🛡</div>
+        <div>
+          <h3>SOC 2 — CC6.1 Logical Access Controls</h3>
+          <p>AI agent access governance evidence · BlueSky Software · period 2026-05-01 → 2026-05-29</p>
+        </div>
+        <button class="exp" id="exportBtn">Export signed log ↓</button>
+      </div>
+      <div class="callout" id="exportMsg" aria-live="polite" style="display:none;color:var(--green);font-weight:700;margin:-4px 0 14px">✓ Signed log exported — <span class="mono">SOC2-CC6.1-BlueSky-2026-05.pdf</span> + <span class="mono">.json</span> · ready for the client QBR</div>
+
+      <div class="card">
+        <div class="card-h">Standard coverage</div>
+        <div class="std-row"><span class="badge b-green">✓ active</span><span class="nm">SOC 2 — CC6.1 logical access controls</span><span class="mono" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-2)">signed PDF / JSON</span></div>
+        <div class="callout">Phase 1 enforces one standard end-to-end rather than half-supporting many.</div>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <div class="card-h">Log sample — signed entries</div>
+        <table class="tbl">
+          <caption>Signed SOC 2 CC6.1 evidence log sample for blocked, held, and review events.</caption>
+          <thead><tr><th scope="col">Timestamp</th><th scope="col">Event</th><th scope="col">Skill</th><th scope="col">Action</th><th scope="col">ATT&CK</th></tr></thead>
+          <tbody>
+            <tr><td class="mono" style="font-size:13px">2026-05-29 23:14:07Z</td><td>Out-of-hours block</td><td class="mono" style="font-size:13px">shell-exec-sudo</td><td><span class="badge b-red">blocked</span></td><td class="mono" style="font-size:12px">T1059</td></tr>
+            <tr><td class="mono" style="font-size:13px">2026-05-29 14:02:55Z</td><td>Credential access block</td><td class="mono" style="font-size:13px">env-reader</td><td><span class="badge b-red">blocked</span></td><td class="mono" style="font-size:12px">T1552.001</td></tr>
+            <tr><td class="mono" style="font-size:13px">2026-05-29 11:30:18Z</td><td>Shadow MCP flagged</td><td class="mono" style="font-size:13px">browser-fetch</td><td><span class="badge b-orange">review</span></td><td class="mono" style="font-size:12px">T1195.001</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <details class="evidence">
+        <summary>Evidence drawer — audit artifact</summary>
+        <div class="evidence-grid">
+          <div class="ev"><div class="k">Standard</div><div class="v">SOC 2 CC6.1</div></div>
+          <div class="ev"><div class="k">Artifact</div><div class="v">signed PDF + JSON</div></div>
+          <div class="ev"><div class="k">Integrity</div><div class="v">sha256 + timestamp</div></div>
+          <div class="ev"><div class="k">Coverage</div><div class="v">blocked · held · reviewed</div></div>
+        </div>
+      </details>
+      <div class="btn-row"><button class="cta" data-go="connect">↺ Restart demo</button></div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+(function(){
+  var panels = document.querySelectorAll('.panel');
+  var navItems = document.querySelectorAll('.nav-item[data-go]');
+  var beats = document.querySelectorAll('.beat[data-go]');
+  var backBtn = document.getElementById('backBtn');
+  var current = 'connect';
+  var hist = [];
+  function render(id){
+    panels.forEach(function(p){ p.classList.toggle('on', p.id===id); });
+    navItems.forEach(function(n){
+      var active = n.dataset.go===id;
+      n.classList.toggle('on', active);
+      n.setAttribute('aria-current', active ? 'page' : 'false');
+    });
+    beats.forEach(function(b){
+      var active = b.dataset.go===id;
+      b.classList.toggle('on', active);
+      b.setAttribute('aria-current', active ? 'step' : 'false');
+    });
+    backBtn.style.visibility = hist.length ? 'visible' : 'hidden';
+    document.querySelector('.main').scrollTop = 0;
+  }
+  function go(id, isBack){
+    if(id===current){ return; }
+    if(!isBack){ hist.push(current); }
+    current = id;
+    render(id);
+  }
+  document.body.addEventListener('click', function(e){
+    if(e.target.closest('#backBtn')){ if(hist.length){ go(hist.pop(), true); } return; }
+    var t = e.target.closest('[data-go]');
+    if(t){ go(t.dataset.go); return; }
+    var sw = e.target.closest('.sw');
+    if(sw){
+      var isOn = !sw.classList.toggle('off');
+      sw.setAttribute('aria-checked', isOn ? 'true' : 'false');
+      return;
+    }
+    var hb = e.target.closest('.hitl .acts button');
+    if(hb){
+      var dec = document.getElementById('hitlDecided');
+      if(dec){ dec.textContent = hb.getAttribute('data-dec') || ''; dec.style.display='inline'; }
+      return;
+    }
+    var ex = e.target.closest('#exportBtn');
+    if(ex){
+      var m = document.getElementById('exportMsg');
+      if(m){ m.style.display='block'; }
+      return;
+    }
+  });
+  render(current);
+})();
+</script>
+</body>
 </html>
